@@ -23,3 +23,7 @@ logs
 .env.*
 !.env.example
 .claude
+
+# ML model files (too large for GitHub)
+server/models/*.pkl
+*.pkl

@@ -5,7 +5,8 @@
 
     <v-bottom-navigation
       v-model="activeTab"
-      color="deep-purple-accent-2"
+      :color="navColor"
+      :bg-color="navBgColor"
       grow
     >
       <v-btn value="home" to="/">
@@ -32,5 +33,37 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
 const activeTab = ref('home')
+
+// Compute navigation colors based on current route
+const navColor = computed(() => {
+  switch (route.path) {
+    case '/':
+      return 'cyan-accent-2'
+    case '/forecast':
+      return 'amber-accent-2'
+    case '/schedule':
+      return 'deep-purple-accent-2'
+    case '/contribute':
+      return 'light-green-accent-2'
+    default:
+      return 'cyan-accent-2'
+  }
+})
+
+const navBgColor = computed(() => {
+  switch (route.path) {
+    case '/':
+      return 'cyan-darken-4'
+    case '/forecast':
+      return 'amber-darken-4'
+    case '/schedule':
+      return 'deep-purple-darken-3'
+    case '/contribute':
+      return 'light-green-darken-4'
+    default:
+      return 'cyan-darken-4'
+  }
+})
 </script>

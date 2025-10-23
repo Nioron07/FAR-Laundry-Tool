@@ -623,6 +623,19 @@ onMounted(() => {
     text-align: center;
   }
 
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .header-icon .v-icon {
+    font-size: 24px !important;
+  }
+
+  .availability-title {
+    font-size: 1.5rem;
+  }
+
   .quick-actions {
     flex-direction: column;
     gap: 0.75rem;
@@ -630,6 +643,15 @@ onMounted(() => {
 
   .count-number {
     font-size: 2.5rem;
+  }
+
+  .machine-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .machine-icon .v-icon {
+    font-size: 22px !important;
   }
 }
 
@@ -642,12 +664,46 @@ onMounted(() => {
     padding: 1rem 1.5rem;
   }
 
+  .card-header {
+    padding: 1.5rem 1rem 0.75rem 1rem;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .header-icon .v-icon {
+    font-size: 20px !important;
+  }
+
   .availability-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+  }
+
+  .hall-name {
+    font-size: 1rem;
+  }
+
+  .availability-grid {
+    padding: 1rem;
   }
 
   .machine-card {
     padding: 1rem;
+  }
+
+  .machine-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .machine-icon .v-icon {
+    font-size: 20px !important;
+  }
+
+  .machine-label h4 {
+    font-size: 1rem;
   }
 
   .count-number {

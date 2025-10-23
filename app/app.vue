@@ -5,7 +5,7 @@
 
     <v-bottom-navigation
       v-model="activeTab"
-      color="cyan-accent-2"
+      color="deep-purple-accent-2"
       grow
     >
       <v-btn value="home" to="/">
@@ -16,6 +16,11 @@
       <v-btn value="forecast" to="/forecast">
         <v-icon>mdi-chart-line</v-icon>
         <span>Forecast</span>
+      </v-btn>
+
+      <v-btn value="schedule" to="/schedule">
+        <v-icon>mdi-calendar-star</v-icon>
+        <span>Schedule</span>
       </v-btn>
 
       <v-btn value="contribute" to="/contribute">

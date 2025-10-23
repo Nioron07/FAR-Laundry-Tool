@@ -201,9 +201,55 @@ async function postToDatabase() {
   margin: 0 auto;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2rem;
+  }
+
+  .subtitle-text {
+    font-size: 0.95rem;
+  }
+
+  .form-card {
+    margin: 0 0.5rem;
+  }
+
   .form-title {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
+    padding: 1.25rem;
+  }
+
+  .form-title .v-icon {
+    font-size: 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-center {
+    padding: 0 0.5rem;
+  }
+
+  .main-title {
+    font-size: 1.75rem;
+  }
+
+  .subtitle-text {
+    font-size: 0.85rem;
+  }
+
+  .form-card {
+    margin: 0 0.25rem;
+  }
+
+  .form-title {
+    font-size: 1.1rem;
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-title .v-icon {
+    font-size: 24px !important;
   }
 }
 </style>

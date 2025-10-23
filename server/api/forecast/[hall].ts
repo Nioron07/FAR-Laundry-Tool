@@ -1,7 +1,4 @@
-import { spawn } from 'child_process'
-import path from 'path'
-import fs from 'fs/promises'
-import os from 'os'
+import { getCachedPredictions, mergePredictionsWithSQL } from '../../utils/cache-manager'
 
 export default defineEventHandler(async (event) => {
   const hall = getRouterParam(event, 'hall')
@@ -56,99 +53,10 @@ export default defineEventHandler(async (event) => {
       formatMySQLDateTime(midnightTodayCentral),
     ])
 
-    if (!historicalData || historicalData.length === 0) {
-      throw createError({
-        statusCode: 404,
-        message: 'No historical data found for hall',
-      })
-    }
-
-    // Run Python script for predictions
-    const predictScript = path.join(process.cwd(), 'server', 'utils', 'predict.py')
-
-    const runPrediction = async (targetType: string): Promise<any[]> => {
-      return new Promise(async (resolve, reject) => {
-        // Write historical data to temp file to avoid command line length limit
-        const tmpFile = path.join(os.tmpdir(), `laundry_day_${hall}_${targetType}_${Date.now()}.json`)
-
-        try {
-          const historicalJson = JSON.stringify(
-            historicalData.map(row => ({
-              hall: row.hall,
-              [`${targetType}_available`]: targetType === 'washers' ? row.washers_available : row.dryers_available,
-              date_added: row.date_added_str,  // Use string format from MySQL (Central Time)
-            }))
-          )
-
-          await fs.writeFile(tmpFile, historicalJson, 'utf8')
-
-          // Pass the temp file path instead of the JSON string
-          const python = spawn('python', [predictScript, hall, targetType, tmpFile])
-          let output = ''
-          let error = ''
-
-          python.stdout.on('data', (data) => {
-            output += data.toString()
-          })
-
-          python.stderr.on('data', (data) => {
-            error += data.toString()
-          })
-
-          python.on('close', async (code) => {
-            // Clean up temp file
-            try {
-              await fs.unlink(tmpFile)
-            }
-            catch (e) {
-              console.error('Error deleting temp file:', e)
-            }
-
-            // Log stderr output for debugging
-            if (error) {
-              console.log(`Python ${targetType} stderr:`, error)
-            }
-
-            if (code !== 0) {
-              console.error('Python script error:', error)
-              // Return empty predictions on error
-              resolve([])
-            }
-            else {
-              try {
-                const predictions = JSON.parse(output)
-                resolve(predictions)
-              }
-              catch (e) {
-                console.error('Error parsing predictions:', e)
-                resolve([])
-              }
-            }
-          })
-        }
-        catch (err) {
-          console.error('Error in runPrediction:', err)
-          try {
-            await fs.unlink(tmpFile)
-          }
-          catch (e) {
-            // Ignore cleanup errors
-          }
-          resolve([])
-        }
-      })
-    }
-
-    // Get predictions for both washers and dryers
-    const [washerPredictions, dryerPredictions] = await Promise.all([
-      runPrediction('washers'),
-      runPrediction('dryers'),
-    ])
-
     // Format historical data for charts
     // Database stores timestamps in Central Time as naive DATETIME
     // We get the raw string from SQL and interpret it as Central Time, then convert to UTC
-    const formattedHistorical = historicalData.map((row) => {
+    const formattedHistorical = (historicalData || []).map((row) => {
       // Use the raw datetime string from SQL (format: "2025-10-21T19:57:06")
       const dateStr = row.date_added_str
 
@@ -160,53 +68,46 @@ export default defineEventHandler(async (event) => {
         timestamp: utcDate.toISOString(),
         washers: row.washers_available,
         dryers: row.dryers_available,
-        isHistorical: true,
       }
     })
 
-    // Combine predictions (if any)
-    const formattedPredictions = []
-    const predictionCount = Math.max(washerPredictions.length, dryerPredictions.length)
+    // Get cached predictions
+    const cachedPredictions = await getCachedPredictions(hall, 'day')
 
-    for (let i = 0; i < predictionCount; i++) {
-      const timestamp = washerPredictions[i]?.timestamp || dryerPredictions[i]?.timestamp
-      if (timestamp) {
-        formattedPredictions.push({
-          timestamp,
-          washers: washerPredictions[i]?.value ?? null,
-          dryers: dryerPredictions[i]?.value ?? null,
-          isHistorical: false,
-        })
-      }
+    if (!cachedPredictions) {
+      throw createError({
+        statusCode: 500,
+        message: 'Cache not available',
+      })
     }
 
-    // Calculate statistics for annotations
-    const allWasherValues = [
-      ...historicalData.map(r => r.washers_available),
-      ...washerPredictions.map(p => p.value),
-    ].filter(v => v !== null && v !== undefined)
+    // Merge SQL data with cached predictions
+    const mergedData = mergePredictionsWithSQL(formattedHistorical, cachedPredictions)
 
-    const allDryerValues = [
-      ...historicalData.map(r => r.dryers_available),
-      ...dryerPredictions.map(p => p.value),
-    ].filter(v => v !== null && v !== undefined)
+    // Split into historical and predictions based on isHistorical flag
+    const historical = mergedData.filter(d => d.isHistorical)
+    const predictions = mergedData.filter(d => !d.isHistorical)
+
+    // Calculate statistics for annotations
+    const allWasherValues = mergedData.map(d => d.washers).filter(v => v !== null && v !== undefined)
+    const allDryerValues = mergedData.map(d => d.dryers).filter(v => v !== null && v !== undefined)
 
     const stats = {
       washers: {
-        min: Math.min(...allWasherValues),
-        max: Math.max(...allWasherValues),
-        current: historicalData[historicalData.length - 1]?.washers_available || 0,
+        min: allWasherValues.length > 0 ? Math.min(...allWasherValues) : 0,
+        max: allWasherValues.length > 0 ? Math.max(...allWasherValues) : 0,
+        current: historical.length > 0 ? historical[historical.length - 1]!.washers : 0,
       },
       dryers: {
-        min: Math.min(...allDryerValues),
-        max: Math.max(...allDryerValues),
-        current: historicalData[historicalData.length - 1]?.dryers_available || 0,
+        min: allDryerValues.length > 0 ? Math.min(...allDryerValues) : 0,
+        max: allDryerValues.length > 0 ? Math.max(...allDryerValues) : 0,
+        current: historical.length > 0 ? historical[historical.length - 1]!.dryers : 0,
       },
     }
 
     return {
-      historical: formattedHistorical,
-      predictions: formattedPredictions,
+      historical,
+      predictions,
       stats,
       lastUpdate: new Date().toISOString(),
     }

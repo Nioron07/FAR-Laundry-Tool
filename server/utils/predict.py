@@ -28,8 +28,14 @@ def predict_day(hall, target_type, historical_data):
     end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=0)
 
     # Generate prediction timestamps (every 5 minutes)
+    # Round current time to nearest 5-minute interval
     prediction_times = []
-    current = now.replace(second=0, microsecond=0) + timedelta(minutes=5)
+    current_minute = now.minute
+    rounded_minute = round(current_minute / 5) * 5
+    if rounded_minute >= 60:
+        current = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    else:
+        current = now.replace(minute=rounded_minute, second=0, microsecond=0)
 
     while current <= end_of_day:
         prediction_times.append(current)

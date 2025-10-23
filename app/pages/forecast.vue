@@ -1360,11 +1360,31 @@ onMounted(() => {
 }
 
 /* Responsive Design */
+@media (max-width: 900px) {
+  .heatmap-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
     text-align: center;
     gap: 1.5rem;
+  }
+
+  .title-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .title-icon .v-icon {
+    font-size: 28px !important;
+  }
+
+  .page-title {
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
   }
 
   .charts-section {
@@ -1377,9 +1397,21 @@ onMounted(() => {
     text-align: center;
   }
 
-  .heatmap-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+  .chart-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chart-icon .v-icon {
+    font-size: 20px !important;
+  }
+
+  .chart-title {
+    font-size: 1.1rem;
+  }
+
+  .chart-subtitle {
+    font-size: 0.8rem;
   }
 
   .header-controls {
@@ -1387,8 +1419,65 @@ onMounted(() => {
     width: 100%;
   }
 
+  .selector-card {
+    width: 100%;
+  }
+
   .date-picker-btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-section {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .title-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title-icon .v-icon {
+    font-size: 24px !important;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .charts-section {
+    padding: 0 0.25rem 1.5rem 0.25rem;
+  }
+
+  .chart-header {
+    padding: 1rem;
+  }
+
+  .chart-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .chart-icon .v-icon {
+    font-size: 18px !important;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+
+  .chart-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .chart-wrapper {
+    padding: 0 0.5rem 0.5rem 0.5rem;
+  }
+
+  .selector-content {
+    padding: 1rem;
+    gap: 0.75rem;
   }
 }
 
@@ -1538,6 +1627,73 @@ onMounted(() => {
 
   .chart-container-dialog {
     min-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .date-dialog-title {
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+
+  .dialog-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dialog-icon-wrapper .v-icon {
+    font-size: 24px !important;
+  }
+
+  .dialog-title-text {
+    font-size: 1.5rem;
+  }
+
+  .dialog-subtitle-text {
+    font-size: 0.85rem;
+  }
+
+  .date-dialog-content {
+    padding: 1rem !important;
+  }
+
+  .dialog-layout {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .date-dialog-title {
+    padding: 1rem;
+  }
+
+  .dialog-title-section {
+    gap: 0.75rem;
+  }
+
+  .dialog-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dialog-icon-wrapper .v-icon {
+    font-size: 20px !important;
+  }
+
+  .dialog-title-text {
+    font-size: 1.25rem;
+  }
+
+  .dialog-subtitle-text {
+    font-size: 0.8rem;
+  }
+
+  .selected-date-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .selected-date-badge .v-icon {
+    font-size: 16px !important;
   }
 }
 </style>

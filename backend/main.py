@@ -19,8 +19,18 @@ from utils.cache import is_cache_valid, generate_and_save_cache
 
 app = Flask(__name__)
 
-# Enable CORS for all routes
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# Enable CORS only for production frontend domain
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://farlaundry.com",
+            "http://localhost:3000",  # For local frontend development
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
 
 # Register API blueprint
 app.register_blueprint(api_bp, url_prefix='/api')

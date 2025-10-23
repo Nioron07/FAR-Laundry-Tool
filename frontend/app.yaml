@@ -1,8 +1,11 @@
 runtime: nodejs22
 
 env_variables:
-  NUXT_PUBLIC_API_BASE: "https://backend-1047148175119.us-central1.run.app"
-  HOST: "0.0.0.0"
   NODE_ENV: "production"
 
-entrypoint: node .output/server/index.mjs
+# Serve static files from .output/public using express server
+entrypoint: npm start
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 1

@@ -1,4 +1,21 @@
 <script setup lang="ts">
+useSeoMeta({
+  title: 'Laundry Forecasts - FAR Laundry',
+  description: 'View predicted washer and dryer availability with daily and weekly forecasts',
+  ogTitle: 'Laundry Forecasts - FAR Laundry',
+  ogDescription: 'View predicted washer and dryer availability with daily and weekly forecasts',
+  ogUrl: 'https://farlaundry.com/forecast',
+  twitterTitle: 'Laundry Forecasts - FAR Laundry',
+  twitterDescription: 'View predicted washer and dryer availability with daily and weekly forecasts',
+  twitterCard: 'summary',
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: 'https://farlaundry.com/forecast' }
+  ]
+})
+
 const config = useRuntimeConfig()
 
 // Hall selection
@@ -808,6 +825,7 @@ onMounted(() => {
             </span>
             Forecasts
           </h1>
+          <p class="page-subtitle">Predict machine availability with historical data forecasts</p>
         </div>
 
         <!-- Hall Selector & Date Picker -->

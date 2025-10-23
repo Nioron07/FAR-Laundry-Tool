@@ -7,15 +7,18 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "start": "node server.js"
   },
   "dependencies": {
     "@google-cloud/cloud-sql-connector": "^1.8.4",
     "@mdi/font": "^7.4.47",
     "@nuxt/eslint": "^1.9.0",
+    "@nuxtjs/seo": "^2.2.0",
     "apexcharts": "^5.3.5",
     "dotenv": "^17.2.3",
     "eslint": "^9.38.0",
+    "express": "^4.21.2",
     "ics": "^3.8.1",
     "mysql2": "^3.15.3",
     "nuxt": "^4.1.3",

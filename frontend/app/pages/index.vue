@@ -6,8 +6,9 @@
           <div class="title-section">
             <h1 class="main-title">
               <span class="title-accent">FAR</span>
-              <span class="title-main">Laundry</span>
+              <span class="title-main">Laundry Availability Tracker</span>
             </h1>
+            <p class="subtitle">Real-time washer and dryer availability for Oglesby and Trelease halls</p>
             <div class="title-underline"></div>
             <div class="creator-badge">
               <v-chip
@@ -86,7 +87,7 @@
                   </div>
                   <div class="header-text">
                     <h2 class="availability-title">Current Availability</h2>
-                    <h3 class="hall-name">{{ hall }}</h3>
+                    <p class="hall-name">{{ hall }}</p>
                   </div>
                 </div>
                 <div class="timestamp-container">
@@ -200,6 +201,7 @@
               </div>
             </v-card>
           </div>
+
         </div>
       </div>
     </v-main>
@@ -207,6 +209,43 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FAR Laundry - Real-Time Availability',
+  description: 'Check washer and dryer availability at Oglesby and Trelease halls in real-time',
+  ogTitle: 'FAR Laundry - Real-Time Availability',
+  ogDescription: 'Check washer and dryer availability at Oglesby and Trelease halls in real-time',
+  ogUrl: 'https://farlaundry.com',
+  twitterTitle: 'FAR Laundry - Real-Time Availability',
+  twitterDescription: 'Check washer and dryer availability at Oglesby and Trelease halls in real-time',
+  twitterCard: 'summary',
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: 'https://farlaundry.com' }
+  ]
+})
+
+useSchemaOrg([
+  {
+    '@type': 'WebApplication',
+    'name': 'FAR Laundry Tool',
+    'url': 'https://farlaundry.com',
+    'description': 'Real-time washer and dryer availability tracking for FAR residence halls',
+    'applicationCategory': 'UtilityApplication',
+    'operatingSystem': 'Web Browser',
+    'offers': {
+      '@type': 'Offer',
+      'price': '0',
+      'priceCurrency': 'USD'
+    },
+    'author': {
+      '@type': 'Person',
+      'name': 'Matthew Hirstius'
+    }
+  }
+])
+
 const config = useRuntimeConfig()
 const toggle = ref(0)
 const hall = ref('Oglesby')
@@ -585,6 +624,62 @@ onMounted(() => {
 .glass-effect {
   backdrop-filter: blur(20px);
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* About Section */
+.about-section {
+  margin-top: 2rem;
+}
+
+.about-card {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(0, 188, 212, 0.2);
+}
+
+.about-content {
+  padding: 2rem !important;
+}
+
+.about-title {
+  font-family: 'Oxanium', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 1.5rem 0;
+}
+
+.about-text {
+  font-family: 'Oxanium', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.25rem;
+}
+
+.features-title {
+  font-family: 'Oxanium', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #26c6da;
+  margin: 2rem 0 1rem 0;
+}
+
+.features-list {
+  font-family: 'Oxanium', sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.8);
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.features-list li {
+  margin-bottom: 0.75rem;
+}
+
+.features-list li::marker {
+  color: #26c6da;
 }
 
 /* Responsive Design */

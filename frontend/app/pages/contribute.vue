@@ -105,6 +105,23 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'Contribute Data - FAR Laundry',
+  description: 'Help improve predictions by submitting current machine availability',
+  ogTitle: 'Contribute Data - FAR Laundry',
+  ogDescription: 'Help improve predictions by submitting current machine availability',
+  ogUrl: 'https://farlaundry.com/contribute',
+  twitterTitle: 'Contribute Data - FAR Laundry',
+  twitterDescription: 'Help improve predictions by submitting current machine availability',
+  twitterCard: 'summary',
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: 'https://farlaundry.com/contribute' }
+  ]
+})
+
 const config = useRuntimeConfig()
 
 const success = ref<string | null>(null)

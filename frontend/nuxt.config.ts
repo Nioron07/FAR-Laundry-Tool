@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
-  ssr: false, // Disable SSR for static generation
+  ssr: true, // Disable SSR for static generation
   modules: [
     '@nuxt/eslint',
     'vuetify-nuxt-module',

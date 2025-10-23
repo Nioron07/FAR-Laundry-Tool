@@ -106,13 +106,13 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'Contribute Data - FAR Laundry',
-  description: 'Help improve predictions by submitting current machine availability',
-  ogTitle: 'Contribute Data - FAR Laundry',
-  ogDescription: 'Help improve predictions by submitting current machine availability',
+  title: 'UIUC Contribute Data - FAR Laundry',
+  description: 'Help improve predictions by submitting current machine availability for Florida Avenue Residence halls at UIUC',
+  ogTitle: 'UIUC Contribute Data - FAR Laundry',
+  ogDescription: 'Help improve predictions by submitting current machine availability for Florida Avenue Residence halls at UIUC',
   ogUrl: 'https://farlaundry.com/contribute',
-  twitterTitle: 'Contribute Data - FAR Laundry',
-  twitterDescription: 'Help improve predictions by submitting current machine availability',
+  twitterTitle: 'UIUC Contribute Data - FAR Laundry',
+  twitterDescription: 'Help improve predictions by submitting current machine availability for Florida Avenue Residence halls at UIUC',
   twitterCard: 'summary',
 })
 

@@ -8,7 +8,7 @@
               <span class="title-accent">FAR</span>
               <span class="title-main">Laundry Availability Tracker</span>
             </h1>
-            <p class="subtitle">Real-time washer and dryer availability for Oglesby and Trelease halls</p>
+            <p class="subtitle">Real-time washer and dryer availability for Florida Avenue Residence halls at UIUC</p>
             <div class="title-underline"></div>
             <div class="creator-badge">
               <v-chip
@@ -210,13 +210,13 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FAR Laundry - Real-Time Availability',
-  description: 'Check washer and dryer availability at Oglesby and Trelease halls in real-time',
-  ogTitle: 'FAR Laundry - Real-Time Availability',
-  ogDescription: 'Check washer and dryer availability at Oglesby and Trelease halls in real-time',
+  title: 'UIUC FAR Laundry - Real-Time Availability',
+  description: 'Check washer and dryer availability at Florida Avenue Residence (FAR) halls - Oglesby and Trelease - at the University of Illinois at Urbana-Champaign (UIUC) in real-time',
+  ogTitle: 'UIUC FAR Laundry - Real-Time Availability',
+  ogDescription: 'Check washer and dryer availability at Florida Avenue Residence (FAR) halls - Oglesby and Trelease - at the University of Illinois at Urbana-Champaign (UIUC) in real-time',
   ogUrl: 'https://farlaundry.com',
-  twitterTitle: 'FAR Laundry - Real-Time Availability',
-  twitterDescription: 'Check washer and dryer availability at Oglesby and Trelease halls in real-time',
+  twitterTitle: 'UIUC FAR Laundry - Real-Time Availability',
+  twitterDescription: 'Check washer and dryer availability at Florida Avenue Residence (FAR) halls - Oglesby and Trelease - at the University of Illinois at Urbana-Champaign (UIUC) in real-time',
   twitterCard: 'summary',
 })
 
@@ -226,25 +226,31 @@ useHead({
   ]
 })
 
-useSchemaOrg([
-  {
-    '@type': 'WebApplication',
-    'name': 'FAR Laundry Tool',
-    'url': 'https://farlaundry.com',
-    'description': 'Real-time washer and dryer availability tracking for FAR residence halls',
-    'applicationCategory': 'UtilityApplication',
-    'operatingSystem': 'Web Browser',
-    'offers': {
-      '@type': 'Offer',
-      'price': '0',
-      'priceCurrency': 'USD'
-    },
-    'author': {
-      '@type': 'Person',
-      'name': 'Matthew Hirstius'
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        'name': 'UIUC FAR Laundry Tool',
+        'url': 'https://farlaundry.com',
+        'description': 'Real-time washer and dryer availability tracking for Florida Avenue Residence (FAR) halls at the University of Illinois at Urbana-Champaign (UIUC)',
+        'applicationCategory': 'UtilityApplication',
+        'operatingSystem': 'Web Browser',
+        'offers': {
+          '@type': 'Offer',
+          'price': '0',
+          'priceCurrency': 'USD'
+        },
+        'author': {
+          '@type': 'Person',
+          'name': 'Matthew Hirstius'
+        }
+      })
     }
-  }
-])
+  ]
+})
 
 const config = useRuntimeConfig()
 const toggle = ref(0)
@@ -330,7 +336,7 @@ onMounted(() => {
 .main-title {
   font-family: 'Oxanium', sans-serif;
   font-weight: 700;
-  font-size: clamp(3rem, 8vw, 4.5rem);
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
   line-height: 1.1;
   margin: 0;
   letter-spacing: -0.02em;
@@ -363,7 +369,7 @@ onMounted(() => {
 
 .subtitle {
   font-family: 'Oxanium', sans-serif;
-  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
   color: rgba(255, 255, 255, 0.7);
   margin: 1rem 0 2rem 0;
   font-weight: 400;

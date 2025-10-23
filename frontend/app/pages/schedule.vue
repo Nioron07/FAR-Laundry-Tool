@@ -2,13 +2,13 @@
 import { createEvents } from 'ics'
 
 useSeoMeta({
-  title: 'Schedule Laundry - FAR Laundry',
-  description: 'Plan your laundry schedule with optimal time suggestions based on historical data',
-  ogTitle: 'Schedule Laundry - FAR Laundry',
-  ogDescription: 'Plan your laundry schedule with optimal time suggestions based on historical data',
+  title: 'UIUC Schedule Laundry - FAR Laundry',
+  description: 'Plan your laundry schedule with optimal time suggestions based on historical data for Florida Avenue Residence halls at UIUC',
+  ogTitle: 'UIUC Schedule Laundry - FAR Laundry',
+  ogDescription: 'Plan your laundry schedule with optimal time suggestions based on historical data for Florida Avenue Residence halls at UIUC',
   ogUrl: 'https://farlaundry.com/schedule',
-  twitterTitle: 'Schedule Laundry - FAR Laundry',
-  twitterDescription: 'Plan your laundry schedule with optimal time suggestions based on historical data',
+  twitterTitle: 'UIUC Schedule Laundry - FAR Laundry',
+  twitterDescription: 'Plan your laundry schedule with optimal time suggestions based on historical data for Florida Avenue Residence halls at UIUC',
   twitterCard: 'summary',
 })
 

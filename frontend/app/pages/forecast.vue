@@ -1,12 +1,12 @@
 <script setup lang="ts">
 useSeoMeta({
-  title: 'Laundry Forecasts - FAR Laundry',
-  description: 'View predicted washer and dryer availability with daily and weekly forecasts',
-  ogTitle: 'Laundry Forecasts - FAR Laundry',
-  ogDescription: 'View predicted washer and dryer availability with daily and weekly forecasts',
+  title: 'UIUC Laundry Forecasts - FAR Laundry',
+  description: 'View predicted washer and dryer availability with daily and weekly forecasts for Florida Avenue Residence halls at UIUC',
+  ogTitle: 'UIUC Laundry Forecasts - FAR Laundry',
+  ogDescription: 'View predicted washer and dryer availability with daily and weekly forecasts for Florida Avenue Residence halls at UIUC',
   ogUrl: 'https://farlaundry.com/forecast',
-  twitterTitle: 'Laundry Forecasts - FAR Laundry',
-  twitterDescription: 'View predicted washer and dryer availability with daily and weekly forecasts',
+  twitterTitle: 'UIUC Laundry Forecasts - FAR Laundry',
+  twitterDescription: 'View predicted washer and dryer availability with daily and weekly forecasts for Florida Avenue Residence halls at UIUC',
   twitterCard: 'summary',
 })
 

@@ -1,0 +1,37 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Nuxt dev/build files (keep .output for deployment)
+.nuxt/
+dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Tests
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Documentation
+README.md
+*.md
+
+# Logs
+logs/
+*.log

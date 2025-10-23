@@ -24,9 +24,11 @@ logs
 !.env.example
 .claude
 
-# ML model files (too large for GitHub)
+# ML model files
 server/models/*.pkl
 *.pkl
-
+*.yaml
 # Prediction cache files
 server/cache/*.json
+backend/cache/predictions-cache.json
+backend/Dockerfile

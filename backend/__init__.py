@@ -1,0 +1,1 @@
+"""FAR Laundry Backend API"""

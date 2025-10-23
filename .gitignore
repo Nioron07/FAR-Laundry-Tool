@@ -31,4 +31,3 @@ server/models/*.pkl
 # Prediction cache files
 server/cache/*.json
 backend/cache/predictions-cache.json
-backend/Dockerfile

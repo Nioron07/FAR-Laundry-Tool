@@ -1,2 +1,2 @@
 # FAR-Laundry-Tool
-A web application dedicated to tracking and offering forecasts for available washers in dryers for Florida Avenue Residence hall @ UIUC 
+A web application dedicated to tracking and offering forecasts for available washers in dryers for the Florida Avenue Residence Hall @ UIUC 

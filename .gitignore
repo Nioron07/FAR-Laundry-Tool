@@ -6,6 +6,7 @@
 .cache
 dist
 
+__pycache__
 # Node dependencies
 node_modules
 

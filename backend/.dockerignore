@@ -25,6 +25,10 @@ ENV/
 # Cache
 predictions_cache.json
 
+# Models (will be downloaded from GCS at runtime)
+models/
+*.pkl
+
 # Git
 .git/
 .gitignore

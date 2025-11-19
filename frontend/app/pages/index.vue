@@ -19,6 +19,18 @@
               >
                 Created by Matthew Hirstius
               </v-chip>
+              <v-chip
+                variant="outlined"
+                color="cyan-accent-2"
+                size="small"
+                prepend-icon="mdi-github"
+                href="https://github.com/Nioron07/FAR-Laundry-Tool"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ml-2"
+              >
+                View Source
+              </v-chip>
             </div>
           </div>
         </div>

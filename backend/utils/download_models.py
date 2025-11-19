@@ -33,7 +33,7 @@ def download_models_from_gcs():
                 continue
 
             print(f'[Models] Downloading {model_file} from GCS bucket {bucket_name}...')
-            blob = bucket.blob(f'models/{model_file}')
+            blob = bucket.blob(model_file)
             blob.download_to_filename(str(local_path))
             print(f'[Models] Successfully downloaded {model_file} ({local_path.stat().st_size / 1024 / 1024:.1f} MB)')
 

@@ -4,6 +4,6 @@ pymysql==1.1.0
 cloud-sql-python-connector[pymysql]==1.18.5
 numpy==1.26.3
 pandas==2.1.4
-scikit-learn==1.6.0
+scikit-learn==1.7.2
 gunicorn==21.2.0
 python-dotenv==1.0.0

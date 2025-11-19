@@ -10,15 +10,27 @@ import os
 
 warnings.filterwarnings('ignore')
 
+# Global model cache to avoid reloading large models
+_model_cache = {}
+
+def load_model(target_type):
+    """Load model with caching to reduce memory usage"""
+    if target_type not in _model_cache:
+        base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
+        model_path = os.path.join(base_path, f'{target_type}_model.pkl')
+
+        print(f'[Models] Loading {target_type} model from {model_path}...')
+        with open(model_path, 'rb') as f:
+            _model_cache[target_type] = pickle.load(f)
+        print(f'[Models] {target_type} model loaded successfully')
+
+    return _model_cache[target_type]
+
 def predict_day(hall, target_type, historical_data):
     """Generate predictions for the rest of the day using Random Forest"""
 
-    # Load model
-    base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
-    model_path = os.path.join(base_path, f'{target_type}_model.pkl')
-
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
+    # Load model (will use cached version if available)
+    model = load_model(target_type)
 
     # Get current time in Central Time (timezone-naive)
     now_utc = datetime.now(timezone.utc)

@@ -10,15 +10,14 @@ import os
 
 warnings.filterwarnings('ignore')
 
+# Import the shared model cache from predict.py
+from .predict import load_model
+
 def predict_week(hall, target_type, historical_data):
     """Generate predictions from now until Sunday midnight (end of week) using Random Forest"""
 
-    # Load model
-    base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
-    model_path = os.path.join(base_path, f'{target_type}_model.pkl')
-
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
+    # Load model (will use cached version if available)
+    model = load_model(target_type)
 
     # Get current time in Central Time (timezone-naive)
     now_utc = datetime.now(timezone.utc)

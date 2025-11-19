@@ -90,7 +90,7 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.ENVIRONMENT === 'DEV'
         ? 'http://localhost:8080'
-        : 'https://backend-1047148175119.us-central1.run.app'
+        : 'https://far-laundry-tool-1047148175119.northamerica-northeast2.run.app'
     }
   },
 })

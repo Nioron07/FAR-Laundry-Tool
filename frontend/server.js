@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 8080
 app.use((req, res, next) => {
   const host = req.hostname
 
-  // Only redirect if www is present (let App Engine handle HTTPS)
+  // Only redirect if www is present (let Cloud Run handle HTTPS)
   if (host && host.startsWith('www.')) {
     const newHost = host.slice(4)
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https'

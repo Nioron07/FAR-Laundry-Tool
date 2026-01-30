@@ -16,14 +16,6 @@ from flask import Flask
 from flask_cors import CORS
 from api.routes import api_bp
 from utils.cache import is_cache_valid, generate_and_save_cache
-from utils.download_models import download_models_from_gcs
-
-# Download models from GCS on startup if needed
-try:
-    download_models_from_gcs()
-except Exception as e:
-    print(f'[Server] Failed to download models from GCS: {e}')
-    print('[Server] Will attempt to use local models if available')
 
 app = Flask(__name__)
 

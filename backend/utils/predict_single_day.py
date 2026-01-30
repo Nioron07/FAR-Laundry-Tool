@@ -1,24 +1,14 @@
 import json
 import sys
-import numpy as np
-import pandas as pd
-import pickle
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-import warnings
 import os
 
-warnings.filterwarnings('ignore')
+from .vertex_predict import vertex_batch_predict
+
 
 def predict_single_day(hall, target_type, date_str):
-    """Generate predictions for a full day (00:00 to 23:59) using Random Forest"""
-
-    # Load model
-    base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
-    model_path = os.path.join(base_path, f'{target_type}_model.pkl')
-
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
+    """Generate predictions for a full day (00:00 to 23:59) via Vertex AI endpoint"""
 
     # Parse the date string (YYYY-MM-DD)
     try:
@@ -46,11 +36,9 @@ def predict_single_day(hall, target_type, date_str):
     if len(prediction_times) == 0:
         return []
 
-    # Create DataFrame with all predictions at once (batch prediction)
-    # Features: hall, month, weekday, hour, minute, year, day
+    # Build feature rows
     features_list = []
     for pred_time in prediction_times:
-        # Convert to naive datetime for feature extraction
         pred_time_naive = pred_time.replace(tzinfo=None)
         features_list.append({
             'hall': int(hall),
@@ -62,10 +50,8 @@ def predict_single_day(hall, target_type, date_str):
             'day': pred_time_naive.day
         })
 
-    features_df = pd.DataFrame(features_list)
-
-    # Batch predict all values at once
-    predicted_values = model.predict(features_df)
+    # Call Vertex AI endpoint
+    predicted_values = vertex_batch_predict(target_type, features_list)
 
     # Format results
     predictions = []

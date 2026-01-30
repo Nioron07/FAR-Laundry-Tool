@@ -23,11 +23,6 @@
         <v-icon>mdi-calendar-star</v-icon>
         <span>Schedule</span>
       </v-btn>
-
-      <v-btn value="contribute" to="/contribute">
-        <v-icon>mdi-database-plus</v-icon>
-        <span>Contribute</span>
-      </v-btn>
     </v-bottom-navigation>
   </v-app>
 </template>
@@ -45,8 +40,6 @@ const navColor = computed(() => {
       return 'amber-accent-2'
     case '/schedule':
       return 'deep-purple-accent-2'
-    case '/contribute':
-      return 'light-green-accent-2'
     default:
       return 'cyan-accent-2'
   }
@@ -60,8 +53,6 @@ const navBgColor = computed(() => {
       return 'amber-darken-4'
     case '/schedule':
       return 'deep-purple-darken-3'
-    case '/contribute':
-      return 'light-green-darken-4'
     default:
       return 'cyan-darken-4'
   }

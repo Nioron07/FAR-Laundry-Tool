@@ -5,21 +5,15 @@ from zoneinfo import ZoneInfo
 from typing import List, Dict
 import traceback
 
-from utils.db import query_database, execute_query
 from utils.cache import (
     get_cached_predictions,
-    merge_predictions_with_sql,
     is_cache_valid,
     generate_and_save_cache
 )
 from utils.predict_single_day import predict_single_day
+from utils.vertex_predict import vertex_batch_predict
 
 api_bp = Blueprint('api', __name__)
-
-
-def format_mysql_datetime(dt: datetime) -> str:
-    """Format datetime for MySQL query"""
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def get_central_time() -> datetime:
@@ -27,146 +21,86 @@ def get_central_time() -> datetime:
     return datetime.now(ZoneInfo('America/Chicago'))
 
 
-# 1. GET /api/current/{hall} - Get current availability
+# 1. GET /api/current/{hall} - Get current predicted availability
 @api_bp.route('/current/<int:hall>', methods=['GET'])
 def get_current_availability(hall):
-    """Get the most recent availability data for a hall"""
+    """Get predicted availability for the current time"""
     try:
-        query = """
-            SELECT washers_available, dryers_available, date_added
-            FROM laundry
-            WHERE hall = %s
-            ORDER BY date_added DESC
-            LIMIT 1
-        """
+        now = get_central_time()
 
-        results = query_database(query, [hall])
+        features = [{
+            'hall': int(hall),
+            'month': now.month,
+            'weekday': now.weekday(),
+            'hour': now.hour,
+            'minute': now.minute,
+            'year': now.year,
+            'day': now.day
+        }]
 
-        if not results:
-            return jsonify({'error': 'No data found for hall'}), 404
+        washer_pred = vertex_batch_predict('washers', features)
+        dryer_pred = vertex_batch_predict('dryers', features)
 
-        record = results[0]
-        date_added = record['date_added']
+        washers = max(0, int(round(washer_pred[0])))
+        dryers = max(0, int(round(dryer_pred[0])))
 
         # Format time like "4:30PM"
-        hours = date_added.hour
-        minutes = date_added.minute
-        period = 'PM' if hours >= 12 else 'AM'
-        display_hours = hours % 12 or 12
-        display_minutes = str(minutes).zfill(2)
+        period = 'PM' if now.hour >= 12 else 'AM'
+        display_hours = now.hour % 12 or 12
+        display_minutes = str(now.minute).zfill(2)
         timestamp = f'{display_hours}:{display_minutes}{period}'
 
         return jsonify({
-            'Washing Machines': record['washers_available'],
-            'Dryers': record['dryers_available'],
+            'Washing Machines': washers,
+            'Dryers': dryers,
             'Timestamp': timestamp
         })
 
     except Exception as e:
-        print(f'Database error: {e}')
+        print(f'Prediction error: {e}')
         traceback.print_exc()
-        return jsonify({'error': 'Database error'}), 500
+        return jsonify({'error': 'Prediction error'}), 500
 
 
-# 2. POST /api/contribute - Submit new availability data
-@api_bp.route('/contribute', methods=['POST'])
-def contribute_data():
-    """Submit new availability data"""
-    try:
-        data = request.json
-        submitted_data = data.get('data')
-
-        if not submitted_data or len(submitted_data) != 3:
-            return jsonify({'error': 'Invalid data format'}), 400
-
-        washers = submitted_data[0]
-        dryers = submitted_data[1]
-        hall = submitted_data[2]
-
-        # Check for duplicate submission (within last 5 minutes)
-        now_central = get_central_time()
-        five_minutes_ago = now_central - timedelta(minutes=5)
-
-        check_query = """
-            SELECT COUNT(*) as count
-            FROM laundry
-            WHERE hall = %s
-              AND washers_available = %s
-              AND dryers_available = %s
-              AND date_added >= %s
-        """
-
-        results = query_database(check_query, [
-            hall, washers, dryers, format_mysql_datetime(five_minutes_ago)
-        ])
-
-        if results and results[0]['count'] > 0:
-            return jsonify({'error': 'Duplicate submission'}), 400
-
-        # Insert new data
-        insert_query = """
-            INSERT INTO laundry (hall, washers_available, dryers_available, date_added)
-            VALUES (%s, %s, %s, %s)
-        """
-
-        execute_query(insert_query, [hall, washers, dryers, format_mysql_datetime(now_central)])
-
-        return jsonify({'success': True}), 200
-
-    except Exception as e:
-        print(f'Contribution error: {e}')
-        traceback.print_exc()
-        return jsonify({'error': 'Server error'}), 500
-
-
-# 3. GET /api/forecast/{hall} - Get day forecast (historical + predictions)
+# 2. GET /api/forecast/{hall} - Get day forecast
 @api_bp.route('/forecast/<int:hall>', methods=['GET'])
 def get_forecast(hall):
-    """Get day forecast with historical data and predictions"""
+    """Get day forecast with predictions"""
     try:
-        # Get midnight today in Central Time
-        now_central = get_central_time()
-        midnight_today = now_central.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # Fetch historical data from today
-        query = """
-            SELECT hall, washers_available, dryers_available,
-                   DATE_FORMAT(date_added, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_added_str,
-                   date_added
-            FROM laundry
-            WHERE hall = %s AND date_added >= %s
-            ORDER BY date_added ASC
-        """
-
-        historical_data = query_database(query, [hall, format_mysql_datetime(midnight_today)])
-
-        # Format historical data
-        formatted_historical = []
-        for row in historical_data:
-            # Parse the datetime string as Central Time
-            dt_str = row['date_added_str']
-            dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M:%S')
-            dt_central = dt.replace(tzinfo=ZoneInfo('America/Chicago'))
-
-            formatted_historical.append({
-                'timestamp': dt_central.isoformat(),
-                'washers': row['washers_available'],
-                'dryers': row['dryers_available']
-            })
-
         # Get cached predictions
         cached_predictions = get_cached_predictions(str(hall), 'day')
 
-        # Merge predictions with SQL data
-        merged_data = merge_predictions_with_sql(formatted_historical, cached_predictions or {'washers': [], 'dryers': []})
+        if not cached_predictions:
+            return jsonify({'historical': [], 'predictions': [], 'stats': {}}), 200
 
-        # Separate into historical and predictions
-        historical = [item for item in merged_data if item.get('isHistorical')]
-        predictions = [item for item in merged_data if not item.get('isHistorical')]
+        # Build predictions list from cache
+        pred_map = {}
+        for pred in cached_predictions.get('washers', []):
+            ts = pred['timestamp']
+            if ts not in pred_map:
+                pred_map[ts] = {'washers': None, 'dryers': None}
+            pred_map[ts]['washers'] = pred['value']
+
+        for pred in cached_predictions.get('dryers', []):
+            ts = pred['timestamp']
+            if ts not in pred_map:
+                pred_map[ts] = {'washers': None, 'dryers': None}
+            pred_map[ts]['dryers'] = pred['value']
+
+        predictions = []
+        for ts, values in pred_map.items():
+            predictions.append({
+                'timestamp': ts,
+                'washers': values['washers'] or 0,
+                'dryers': values['dryers'] or 0,
+                'isHistorical': False
+            })
+
+        predictions.sort(key=lambda x: datetime.fromisoformat(x['timestamp']))
 
         # Calculate stats
-        all_washers = [item['washers'] for item in merged_data if item['washers'] is not None]
-        all_dryers = [item['dryers'] for item in merged_data if item['dryers'] is not None]
+        all_washers = [p['washers'] for p in predictions if p['washers'] is not None]
+        all_dryers = [p['dryers'] for p in predictions if p['dryers'] is not None]
 
         stats = {
             'avgWashers': sum(all_washers) / len(all_washers) if all_washers else 0,
@@ -178,7 +112,7 @@ def get_forecast(hall):
         }
 
         return jsonify({
-            'historical': historical,
+            'historical': [],
             'predictions': predictions,
             'stats': stats
         })
@@ -189,53 +123,45 @@ def get_forecast(hall):
         return jsonify({'error': 'Server error'}), 500
 
 
-# 4. GET /api/forecast-week/{hall} - Get week forecast
+# 3. GET /api/forecast-week/{hall} - Get week forecast
 @api_bp.route('/forecast-week/<int:hall>', methods=['GET'])
 def get_week_forecast(hall):
-    """Get week forecast with historical data and predictions"""
+    """Get week forecast with predictions"""
     try:
-        # Get Monday of this week in Central Time
-        now_central = get_central_time()
-        days_since_monday = now_central.weekday()
-        monday_this_week = (now_central - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # Fetch historical data from Monday
-        query = """
-            SELECT hall, washers_available, dryers_available,
-                   DATE_FORMAT(date_added, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_added_str
-            FROM laundry
-            WHERE hall = %s AND date_added >= %s
-            ORDER BY date_added ASC
-        """
-
-        historical_data = query_database(query, [hall, format_mysql_datetime(monday_this_week)])
-
-        # Format historical data
-        formatted_historical = []
-        for row in historical_data:
-            dt_str = row['date_added_str']
-            dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M:%S')
-            dt_central = dt.replace(tzinfo=ZoneInfo('America/Chicago'))
-
-            formatted_historical.append({
-                'timestamp': dt_central.isoformat(),
-                'washers': row['washers_available'],
-                'dryers': row['dryers_available']
-            })
-
         # Get cached predictions
         cached_predictions = get_cached_predictions(str(hall), 'week')
 
-        # Merge predictions with SQL data
-        merged_data = merge_predictions_with_sql(formatted_historical, cached_predictions or {'washers': [], 'dryers': []})
+        if not cached_predictions:
+            return jsonify({'historical': [], 'predictions': [], 'stats': {}}), 200
 
-        # Separate into historical and predictions
-        historical = [item for item in merged_data if item.get('isHistorical')]
-        predictions = [item for item in merged_data if not item.get('isHistorical')]
+        # Build predictions list from cache
+        pred_map = {}
+        for pred in cached_predictions.get('washers', []):
+            ts = pred['timestamp']
+            if ts not in pred_map:
+                pred_map[ts] = {'washers': None, 'dryers': None}
+            pred_map[ts]['washers'] = pred['value']
+
+        for pred in cached_predictions.get('dryers', []):
+            ts = pred['timestamp']
+            if ts not in pred_map:
+                pred_map[ts] = {'washers': None, 'dryers': None}
+            pred_map[ts]['dryers'] = pred['value']
+
+        predictions = []
+        for ts, values in pred_map.items():
+            predictions.append({
+                'timestamp': ts,
+                'washers': values['washers'] or 0,
+                'dryers': values['dryers'] or 0,
+                'isHistorical': False
+            })
+
+        predictions.sort(key=lambda x: datetime.fromisoformat(x['timestamp']))
 
         # Calculate stats
-        all_washers = [item['washers'] for item in merged_data if item['washers'] is not None]
-        all_dryers = [item['dryers'] for item in merged_data if item['dryers'] is not None]
+        all_washers = [p['washers'] for p in predictions if p['washers'] is not None]
+        all_dryers = [p['dryers'] for p in predictions if p['dryers'] is not None]
 
         stats = {
             'avgWashers': sum(all_washers) / len(all_washers) if all_washers else 0,
@@ -247,7 +173,7 @@ def get_week_forecast(hall):
         }
 
         return jsonify({
-            'historical': historical,
+            'historical': [],
             'predictions': predictions,
             'stats': stats
         })
@@ -258,50 +184,16 @@ def get_week_forecast(hall):
         return jsonify({'error': 'Server error'}), 500
 
 
-# 5. GET /api/forecast-date/{hall}/{date} - Get forecast for specific date
+# 4. GET /api/forecast-date/{hall}/{date} - Get forecast for specific date
 @api_bp.route('/forecast-date/<int:hall>/<string:date>', methods=['GET'])
 def get_date_forecast(hall, date):
     """Get forecast for a specific date"""
     try:
-        # Parse date (YYYY-MM-DD format)
-        target_date = datetime.strptime(date, '%Y-%m-%d')
-        target_date = target_date.replace(tzinfo=ZoneInfo('America/Chicago'))
-
         # Generate predictions for this date
         washer_predictions = predict_single_day(str(hall), 'washers', date)
         dryer_predictions = predict_single_day(str(hall), 'dryers', date)
 
-        # Check if this is today - if so, get historical data
-        now_central = get_central_time()
-        is_today = target_date.date() == now_central.date()
-
-        historical = []
-        if is_today:
-            midnight_today = now_central.replace(hour=0, minute=0, second=0, microsecond=0)
-
-            query = """
-                SELECT washers_available, dryers_available,
-                       DATE_FORMAT(date_added, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_added_str
-                FROM laundry
-                WHERE hall = %s AND date_added >= %s
-                ORDER BY date_added ASC
-            """
-
-            historical_data = query_database(query, [hall, format_mysql_datetime(midnight_today)])
-
-            for row in historical_data:
-                dt_str = row['date_added_str']
-                dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M:%S')
-                dt_central = dt.replace(tzinfo=ZoneInfo('America/Chicago'))
-
-                historical.append({
-                    'timestamp': dt_central.isoformat(),
-                    'washers': row['washers_available'],
-                    'dryers': row['dryers_available']
-                })
-
         # Format predictions
-        predictions = []
         pred_map = {}
 
         for pred in washer_predictions:
@@ -316,6 +208,7 @@ def get_date_forecast(hall, date):
                 pred_map[timestamp] = {'washers': None, 'dryers': None}
             pred_map[timestamp]['dryers'] = pred['value']
 
+        predictions = []
         for timestamp, values in pred_map.items():
             predictions.append({
                 'timestamp': timestamp,
@@ -323,11 +216,10 @@ def get_date_forecast(hall, date):
                 'dryers': values['dryers'] or 0
             })
 
-        # Sort predictions by timestamp
         predictions.sort(key=lambda x: datetime.fromisoformat(x['timestamp']))
 
         return jsonify({
-            'historical': historical,
+            'historical': [],
             'predictions': predictions
         })
 
@@ -337,13 +229,11 @@ def get_date_forecast(hall, date):
         return jsonify({'error': 'Server error'}), 500
 
 
-# 6. GET /api/schedule/{hall} - Get schedule planner results
+# 5. GET /api/schedule/{hall} - Get schedule planner results
 @api_bp.route('/schedule/<int:hall>', methods=['GET'])
 def get_schedule(hall):
     """Get schedule planner results"""
     try:
-        from flask import request
-
         # Get query parameters
         start_date_str = request.args.get('startDate')
         end_date_str = request.args.get('endDate')
@@ -399,64 +289,10 @@ def get_schedule(hall):
 
         # Helper function to get predictions for a date
         def get_predictions_for_date(target_date):
-            # Get today's date in Central Time
-            now_central = get_central_time()
-            today_date_str = now_central.strftime('%Y-%m-%d')
             target_date_str = target_date.strftime('%Y-%m-%d')
-
-            is_today = target_date_str == today_date_str
-
-            if is_today:
-                # Get midnight today in Central Time
-                midnight_today = now_central.replace(hour=0, minute=0, second=0, microsecond=0)
-
-                # Fetch historical data from SQL
-                query = """
-                    SELECT washers_available, dryers_available,
-                           DATE_FORMAT(date_added, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_added_str
-                    FROM laundry
-                    WHERE hall = %s AND date_added >= %s
-                    ORDER BY date_added ASC
-                """
-
-                historical_data = query_database(query, [hall, format_mysql_datetime(midnight_today)])
-
-                # Format historical data
-                formatted_historical = []
-                for row in historical_data:
-                    dt_str = row['date_added_str']
-                    dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M:%S')
-                    dt_central = dt.replace(tzinfo=ZoneInfo('America/Chicago'))
-
-                    formatted_historical.append({
-                        'timestamp': dt_central.isoformat(),
-                        'washers': row['washers_available'],
-                        'dryers': row['dryers_available']
-                    })
-
-                # Get cached predictions
-                cached_predictions = get_cached_predictions(str(hall), 'day')
-
-                if cached_predictions:
-                    # Merge SQL data with cached predictions
-                    merged_data = merge_predictions_with_sql(formatted_historical, cached_predictions)
-
-                    # Convert to prediction format
-                    washers = [{'timestamp': d['timestamp'], 'value': d['washers']} for d in merged_data]
-                    dryers = [{'timestamp': d['timestamp'], 'value': d['dryers']} for d in merged_data]
-
-                    return {'washers': washers, 'dryers': dryers}
-                else:
-                    # Use historical data only
-                    washers = [{'timestamp': d['timestamp'], 'value': d['washers']} for d in formatted_historical]
-                    dryers = [{'timestamp': d['timestamp'], 'value': d['dryers']} for d in formatted_historical]
-                    return {'washers': washers, 'dryers': dryers}
-            else:
-                # Future date - generate predictions on-demand
-                washer_preds = predict_single_day(str(hall), 'washers', target_date_str)
-                dryer_preds = predict_single_day(str(hall), 'dryers', target_date_str)
-
-                return {'washers': washer_preds, 'dryers': dryer_preds}
+            washer_preds = predict_single_day(str(hall), 'washers', target_date_str)
+            dryer_preds = predict_single_day(str(hall), 'dryers', target_date_str)
+            return {'washers': washer_preds, 'dryers': dryer_preds}
 
         # Helper function to find best time for a specific day
         def find_best_time_for_day(target_date):
@@ -478,7 +314,6 @@ def get_schedule(hall):
             washer_predictions = []
             for pred in predictions['washers']:
                 pred_date = datetime.fromisoformat(pred['timestamp'].replace('Z', '+00:00'))
-                # Convert to Central Time for hour checking
                 pred_date_central = pred_date.astimezone(ZoneInfo('America/Chicago'))
                 pred_hour = pred_date_central.hour
                 if day_min_hour <= pred_hour <= day_max_hour:

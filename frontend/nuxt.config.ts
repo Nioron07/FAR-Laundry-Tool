@@ -18,7 +18,6 @@ export default defineNuxtConfig({
         '/',
         '/forecast',
         '/schedule',
-        '/contribute',
       ],
     },
   },

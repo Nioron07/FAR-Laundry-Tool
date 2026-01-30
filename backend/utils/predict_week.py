@@ -1,23 +1,14 @@
 import json
 import sys
-import numpy as np
-import pandas as pd
-import pickle
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-import warnings
 import os
 
-warnings.filterwarnings('ignore')
+from .vertex_predict import vertex_batch_predict
 
-# Import the shared model cache from predict.py
-from .predict import load_model
 
 def predict_week(hall, target_type, historical_data):
-    """Generate predictions from now until Sunday midnight (end of week) using Random Forest"""
-
-    # Load model (will use cached version if available)
-    model = load_model(target_type)
+    """Generate predictions from now until Sunday midnight via Vertex AI endpoint"""
 
     # Get current time in Central Time (timezone-naive)
     now_utc = datetime.now(timezone.utc)
@@ -27,15 +18,12 @@ def predict_week(hall, target_type, historical_data):
     # Calculate end of week (Sunday 23:59:59)
     days_until_sunday = (6 - now.weekday()) % 7  # 0 = Monday, 6 = Sunday
     if days_until_sunday == 0 and now.hour < 23:
-        # If today is Sunday but before midnight, end is tonight
         end_of_week = now.replace(hour=23, minute=59, second=59, microsecond=0)
     else:
-        # Otherwise, find next Sunday
         end_of_week = now + timedelta(days=days_until_sunday)
         end_of_week = end_of_week.replace(hour=23, minute=59, second=59, microsecond=0)
 
     # Generate prediction timestamps (every 5 minutes)
-    # Round current time to nearest 5-minute interval
     prediction_times = []
     current_minute = now.minute
     rounded_minute = round(current_minute / 5) * 5
@@ -51,8 +39,7 @@ def predict_week(hall, target_type, historical_data):
     if len(prediction_times) == 0:
         return []
 
-    # Create DataFrame with all predictions at once (batch prediction)
-    # Features: hall, month, weekday, hour, minute, year, day
+    # Build feature rows
     features_list = []
     for pred_time in prediction_times:
         features_list.append({
@@ -65,17 +52,14 @@ def predict_week(hall, target_type, historical_data):
             'day': pred_time.day
         })
 
-    features_df = pd.DataFrame(features_list)
-
-    # Batch predict all values at once
-    predicted_values = model.predict(features_df)
+    # Call Vertex AI endpoint
+    predicted_values = vertex_batch_predict(target_type, features_list)
 
     # Format results
     predictions = []
     for i, pred_time in enumerate(prediction_times):
         new_value = max(0, int(round(predicted_values[i])))
 
-        # Keep timestamps in Central Time to match historical data format
         pred_time_aware = pred_time.replace(tzinfo=ZoneInfo('America/Chicago'))
 
         predictions.append({

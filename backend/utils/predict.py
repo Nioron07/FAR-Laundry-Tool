@@ -1,36 +1,14 @@
 import json
 import sys
-import numpy as np
-import pandas as pd
-import pickle
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-import warnings
 import os
 
-warnings.filterwarnings('ignore')
+from .vertex_predict import vertex_batch_predict
 
-# Global model cache to avoid reloading large models
-_model_cache = {}
-
-def load_model(target_type):
-    """Load model with caching to reduce memory usage"""
-    if target_type not in _model_cache:
-        base_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
-        model_path = os.path.join(base_path, f'{target_type}_model.pkl')
-
-        print(f'[Models] Loading {target_type} model from {model_path}...')
-        with open(model_path, 'rb') as f:
-            _model_cache[target_type] = pickle.load(f)
-        print(f'[Models] {target_type} model loaded successfully')
-
-    return _model_cache[target_type]
 
 def predict_day(hall, target_type, historical_data):
-    """Generate predictions for the rest of the day using Random Forest"""
-
-    # Load model (will use cached version if available)
-    model = load_model(target_type)
+    """Generate predictions for the rest of the day via Vertex AI endpoint"""
 
     # Get current time in Central Time (timezone-naive)
     now_utc = datetime.now(timezone.utc)
@@ -56,8 +34,7 @@ def predict_day(hall, target_type, historical_data):
     if len(prediction_times) == 0:
         return []
 
-    # Create DataFrame with all predictions at once (batch prediction)
-    # Features: hall, month, weekday, hour, minute, year, day
+    # Build feature rows
     features_list = []
     for pred_time in prediction_times:
         features_list.append({
@@ -70,10 +47,8 @@ def predict_day(hall, target_type, historical_data):
             'day': pred_time.day
         })
 
-    features_df = pd.DataFrame(features_list)
-
-    # Batch predict all values at once
-    predicted_values = model.predict(features_df)
+    # Call Vertex AI endpoint
+    predicted_values = vertex_batch_predict(target_type, features_list)
 
     # Format results
     predictions = []

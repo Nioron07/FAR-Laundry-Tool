@@ -825,7 +825,7 @@ onMounted(() => {
             </span>
             Forecasts
           </h1>
-          <p class="page-subtitle">Predict machine availability with historical data forecasts</p>
+          <p class="page-subtitle">Predicted washer and dryer availability forecasts</p>
         </div>
 
         <!-- Hall Selector & Date Picker -->
@@ -895,7 +895,7 @@ onMounted(() => {
               </div>
               <div>
                 <h3 class="chart-title">Today's Forecast</h3>
-                <p class="chart-subtitle">Historical data and predictions for the rest of the day</p>
+                <p class="chart-subtitle">Predicted machine availability for the rest of the day</p>
               </div>
             </div>
             <div class="chart-actions">
@@ -950,7 +950,7 @@ onMounted(() => {
               </div>
               <div>
                 <h3 class="chart-title">Week Forecast</h3>
-                <p class="chart-subtitle">Historical data from Monday and predictions until Sunday</p>
+                <p class="chart-subtitle">Predicted machine availability from now until Sunday</p>
               </div>
             </div>
             <div class="chart-actions">

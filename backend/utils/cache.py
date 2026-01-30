@@ -1,6 +1,5 @@
 """Prediction cache management"""
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -8,7 +7,6 @@ from typing import Dict, List, Optional
 
 from .predict import predict_day
 from .predict_week import predict_week
-from .predict_single_day import predict_single_day
 
 # Cache file path
 CACHE_DIR = Path(__file__).parent.parent / 'cache'
@@ -117,72 +115,3 @@ def get_cached_predictions(hall: str, prediction_type: str) -> Optional[Dict[str
     return hall_data.get(prediction_type)
 
 
-def round_to_5_minutes(timestamp_str: str) -> str:
-    """Round timestamp to nearest 5-minute interval"""
-    dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-    ms = int(dt.timestamp() * 1000)
-    rounded_ms = round(ms / (5 * 60 * 1000)) * (5 * 60 * 1000)
-    rounded_dt = datetime.fromtimestamp(rounded_ms / 1000, tz=dt.tzinfo)
-    return rounded_dt.isoformat()
-
-
-def merge_predictions_with_sql(sql_data: List[Dict], cached_predictions: Dict[str, List]) -> List[Dict]:
-    """Merge SQL historical data with cached predictions
-
-    Uses SQL data where available, predictions for future timestamps
-
-    Args:
-        sql_data: List of dicts with 'timestamp', 'washers', 'dryers'
-        cached_predictions: Dict with 'washers' and 'dryers' prediction lists
-
-    Returns:
-        List of merged data points with 'timestamp', 'washers', 'dryers', 'isHistorical'
-    """
-    # Create a map of SQL data by ROUNDED timestamp
-    sql_map = {}
-    for item in sql_data:
-        rounded_timestamp = round_to_5_minutes(item['timestamp'])
-        sql_map[rounded_timestamp] = {
-            'washers': item['washers'],
-            'dryers': item['dryers']
-        }
-
-    # Create map of predictions by timestamp
-    prediction_map = {}
-
-    for pred in cached_predictions.get('washers', []):
-        timestamp = pred['timestamp']
-        if timestamp not in prediction_map:
-            prediction_map[timestamp] = {'washers': None, 'dryers': None}
-        prediction_map[timestamp]['washers'] = pred['value']
-
-    for pred in cached_predictions.get('dryers', []):
-        timestamp = pred['timestamp']
-        if timestamp not in prediction_map:
-            prediction_map[timestamp] = {'washers': None, 'dryers': None}
-        prediction_map[timestamp]['dryers'] = pred['value']
-
-    # Start with SQL data (using rounded timestamps)
-    result = []
-    for rounded_timestamp, data in sql_map.items():
-        result.append({
-            'timestamp': rounded_timestamp,
-            'washers': data['washers'],
-            'dryers': data['dryers'],
-            'isHistorical': True
-        })
-
-    # Add predictions for timestamps not in SQL
-    for timestamp, pred in prediction_map.items():
-        if timestamp not in sql_map:
-            result.append({
-                'timestamp': timestamp,
-                'washers': pred['washers'] if pred['washers'] is not None else 0,
-                'dryers': pred['dryers'] if pred['dryers'] is not None else 0,
-                'isHistorical': False
-            })
-
-    # Sort by timestamp
-    result.sort(key=lambda x: datetime.fromisoformat(x['timestamp'].replace('Z', '+00:00')))
-
-    return result

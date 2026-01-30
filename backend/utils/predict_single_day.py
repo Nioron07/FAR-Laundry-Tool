@@ -58,7 +58,6 @@ def predict_single_day(hall, target_type, date_str):
     for i, pred_time in enumerate(prediction_times):
         new_value = max(0, int(round(predicted_values[i])))
 
-        # Keep timestamps in Central Time to match historical data format
         predictions.append({
             'timestamp': pred_time.isoformat(),
             'value': new_value

@@ -79,9 +79,6 @@ const chartOptions = ref({
       speed: 800,
     },
   },
-  forecastDataPoints: {
-    count: 0, // Will be updated dynamically based on prediction count
-  },
   colors: ['#FFB300', '#FF8F00'],
   stroke: {
     curve: 'smooth',
@@ -182,9 +179,6 @@ const weekChartOptions = ref({
       easing: 'easeinout',
       speed: 800,
     },
-  },
-  forecastDataPoints: {
-    count: 0,
   },
   colors: ['#FFB300', '#FF8F00'],
   stroke: {
@@ -368,9 +362,6 @@ const dateChartOptions = ref({
       speed: 800,
     },
   },
-  forecastDataPoints: {
-    count: 0,
-  },
   colors: ['#FFB300', '#FF8F00'],
   stroke: {
     curve: 'smooth',
@@ -462,41 +453,24 @@ async function fetchForecast() {
     }
 
     // Prepare data for chart - both washers and dryers on same chart
-    const washerHistorical = response.historical.map(item => ({
+    const washerData = response.predictions.map(item => ({
       x: parseTimestamp(item.timestamp),
       y: item.washers,
     }))
 
-    const washerPredictions = response.predictions.map(item => ({
-      x: parseTimestamp(item.timestamp),
-      y: item.washers,
-    }))
-
-    const dryerHistorical = response.historical.map(item => ({
+    const dryerData = response.predictions.map(item => ({
       x: parseTimestamp(item.timestamp),
       y: item.dryers,
     }))
-
-    const dryerPredictions = response.predictions.map(item => ({
-      x: parseTimestamp(item.timestamp),
-      y: item.dryers,
-    }))
-
-    // Combine historical and predictions into single arrays
-    const washerCombined = [...washerHistorical, ...washerPredictions]
-    const dryerCombined = [...dryerHistorical, ...dryerPredictions]
-
-    // Update forecast data points count (how many from the end are predictions)
-    chartOptions.value.forecastDataPoints.count = washerPredictions.length
 
     chartSeries.value = [
       {
         name: 'Washers',
-        data: washerCombined,
+        data: washerData,
       },
       {
         name: 'Dryers',
-        data: dryerCombined,
+        data: dryerData,
       },
     ]
 
@@ -549,39 +523,24 @@ async function fetchWeekForecast() {
     }
 
     // Prepare data for chart
-    const washerHistorical = response.historical.map(item => ({
+    const washerData = response.predictions.map(item => ({
       x: parseTimestamp(item.timestamp),
       y: item.washers,
     }))
 
-    const washerPredictions = response.predictions.map(item => ({
-      x: parseTimestamp(item.timestamp),
-      y: item.washers,
-    }))
-
-    const dryerHistorical = response.historical.map(item => ({
+    const dryerData = response.predictions.map(item => ({
       x: parseTimestamp(item.timestamp),
       y: item.dryers,
     }))
-
-    const dryerPredictions = response.predictions.map(item => ({
-      x: parseTimestamp(item.timestamp),
-      y: item.dryers,
-    }))
-
-    const washerCombined = [...washerHistorical, ...washerPredictions]
-    const dryerCombined = [...dryerHistorical, ...dryerPredictions]
-
-    weekChartOptions.value.forecastDataPoints.count = washerPredictions.length
 
     weekChartSeries.value = [
       {
         name: 'Washers',
-        data: washerCombined,
+        data: washerData,
       },
       {
         name: 'Dryers',
-        data: dryerCombined,
+        data: dryerData,
       },
     ]
 
@@ -603,8 +562,7 @@ async function fetchWeekForecast() {
 }
 
 function processHeatmapData(data) {
-  // Combine historical and predictions
-  const allData = [...data.historical, ...data.predictions]
+  const allData = data.predictions
 
   // Parse timestamps to Central Time
   const parseTimestamp = (timestamp) => {
@@ -757,20 +715,15 @@ async function fetchDateForecast() {
       return new Date(centralStr).getTime()
     }
 
-    // Combine historical and predictions
-    const allData = [...response.historical, ...response.predictions]
-
-    const washerData = allData.map((item: any) => ({
+    const washerData = response.predictions.map((item: any) => ({
       x: parseTimestamp(item.timestamp),
       y: item.washers,
     }))
 
-    const dryerData = allData.map((item: any) => ({
+    const dryerData = response.predictions.map((item: any) => ({
       x: parseTimestamp(item.timestamp),
       y: item.dryers,
     }))
-
-    dateChartOptions.value.forecastDataPoints.count = response.predictions.length
 
     dateChartSeries.value = [
       {

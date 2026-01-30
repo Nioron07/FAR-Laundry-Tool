@@ -2,35 +2,31 @@ import json
 import sys
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-import os
 
 from .vertex_predict import vertex_batch_predict
 
 
-def predict_week(hall, target_type, historical_data):
-    """Generate predictions from now until Sunday midnight via Vertex AI endpoint"""
+def predict_week(hall, target_type):
+    """Generate predictions for the full week (Monday 00:00 to Sunday 23:59) via Vertex AI endpoint"""
 
-    # Get current time in Central Time (timezone-naive)
+    # Get current date in Central Time
     now_utc = datetime.now(timezone.utc)
     now_central = now_utc.astimezone(ZoneInfo('America/Chicago'))
-    now = now_central.replace(tzinfo=None)
+    today = now_central.replace(tzinfo=None)
 
-    # Calculate end of week (Sunday 23:59:59)
-    days_until_sunday = (6 - now.weekday()) % 7  # 0 = Monday, 6 = Sunday
-    if days_until_sunday == 0 and now.hour < 23:
-        end_of_week = now.replace(hour=23, minute=59, second=59, microsecond=0)
-    else:
-        end_of_week = now + timedelta(days=days_until_sunday)
-        end_of_week = end_of_week.replace(hour=23, minute=59, second=59, microsecond=0)
+    # Calculate start of week (Monday 00:00) and end of week (Sunday 23:59:59)
+    days_since_monday = today.weekday()  # 0 = Monday, 6 = Sunday
+    start_of_week = (today - timedelta(days=days_since_monday)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+
+    end_of_week = (start_of_week + timedelta(days=6)).replace(
+        hour=23, minute=59, second=59, microsecond=0
+    )
 
     # Generate prediction timestamps (every 5 minutes)
     prediction_times = []
-    current_minute = now.minute
-    rounded_minute = round(current_minute / 5) * 5
-    if rounded_minute >= 60:
-        current = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-    else:
-        current = now.replace(minute=rounded_minute, second=0, microsecond=0)
+    current = start_of_week
 
     while current <= end_of_week:
         prediction_times.append(current)
@@ -70,25 +66,9 @@ def predict_week(hall, target_type, historical_data):
     return predictions
 
 if __name__ == "__main__":
-    # Read input from command line
     hall = sys.argv[1]
     target_type = sys.argv[2]  # 'washers' or 'dryers'
 
-    # Third argument is now a file path instead of JSON string
-    if len(sys.argv) > 3:
-        historical_file = sys.argv[3]
-
-        # Check if it's a file path or JSON string (for backwards compatibility)
-        if os.path.exists(historical_file):
-            # Read from file
-            with open(historical_file, 'r') as f:
-                historical_data = json.load(f)
-        else:
-            # Fallback to parsing as JSON string
-            historical_data = json.loads(historical_file)
-    else:
-        historical_data = []
-
-    predictions = predict_week(hall, target_type, historical_data)
+    predictions = predict_week(hall, target_type)
 
     print(json.dumps(predictions))

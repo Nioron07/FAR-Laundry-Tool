@@ -77,11 +77,11 @@ def generate_and_save_cache():
         # Generate day and week predictions for washers and dryers
         for target_type in target_types:
             print(f'[Cache]   - {target_type} (day)...')
-            day_predictions = predict_day(hall, target_type, [])
+            day_predictions = predict_day(hall, target_type)
             hall_predictions['day'][target_type] = day_predictions
 
             print(f'[Cache]   - {target_type} (week)...')
-            week_predictions = predict_week(hall, target_type, [])
+            week_predictions = predict_week(hall, target_type)
             hall_predictions['week'][target_type] = week_predictions
 
         cache_data['halls'][hall] = hall_predictions

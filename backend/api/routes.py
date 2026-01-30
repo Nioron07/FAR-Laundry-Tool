@@ -71,7 +71,7 @@ def get_forecast(hall):
         cached_predictions = get_cached_predictions(str(hall), 'day')
 
         if not cached_predictions:
-            return jsonify({'historical': [], 'predictions': [], 'stats': {}}), 200
+            return jsonify({'predictions': [], 'stats': {}}), 200
 
         # Build predictions list from cache
         pred_map = {}
@@ -93,7 +93,6 @@ def get_forecast(hall):
                 'timestamp': ts,
                 'washers': values['washers'] or 0,
                 'dryers': values['dryers'] or 0,
-                'isHistorical': False
             })
 
         predictions.sort(key=lambda x: datetime.fromisoformat(x['timestamp']))
@@ -112,7 +111,6 @@ def get_forecast(hall):
         }
 
         return jsonify({
-            'historical': [],
             'predictions': predictions,
             'stats': stats
         })
@@ -132,7 +130,7 @@ def get_week_forecast(hall):
         cached_predictions = get_cached_predictions(str(hall), 'week')
 
         if not cached_predictions:
-            return jsonify({'historical': [], 'predictions': [], 'stats': {}}), 200
+            return jsonify({'predictions': [], 'stats': {}}), 200
 
         # Build predictions list from cache
         pred_map = {}
@@ -154,7 +152,6 @@ def get_week_forecast(hall):
                 'timestamp': ts,
                 'washers': values['washers'] or 0,
                 'dryers': values['dryers'] or 0,
-                'isHistorical': False
             })
 
         predictions.sort(key=lambda x: datetime.fromisoformat(x['timestamp']))
@@ -173,7 +170,6 @@ def get_week_forecast(hall):
         }
 
         return jsonify({
-            'historical': [],
             'predictions': predictions,
             'stats': stats
         })
@@ -219,7 +215,6 @@ def get_date_forecast(hall, date):
         predictions.sort(key=lambda x: datetime.fromisoformat(x['timestamp']))
 
         return jsonify({
-            'historical': [],
             'predictions': predictions
         })
 

@@ -11,7 +11,6 @@ from utils.cache import (
     generate_and_save_cache
 )
 from utils.predict_single_day import predict_single_day
-from utils.vertex_predict import vertex_batch_predict
 
 api_bp = Blueprint('api', __name__)
 
@@ -24,25 +23,36 @@ def get_central_time() -> datetime:
 # 1. GET /api/current/{hall} - Get current predicted availability
 @api_bp.route('/current/<int:hall>', methods=['GET'])
 def get_current_availability(hall):
-    """Get predicted availability for the current time"""
+    """Get predicted availability for the current time from cached day predictions"""
     try:
         now = get_central_time()
 
-        features = [{
-            'hall': int(hall),
-            'month': now.month,
-            'weekday': now.weekday(),
-            'hour': now.hour,
-            'minute': now.minute,
-            'year': now.year,
-            'day': now.day
-        }]
+        # Round to nearest 5-minute interval to match cached timestamps
+        minute = now.minute
+        rounded_minute = round(minute / 5) * 5
+        if rounded_minute >= 60:
+            rounded_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        else:
+            rounded_time = now.replace(minute=rounded_minute, second=0, microsecond=0)
 
-        washer_pred = vertex_batch_predict('washers', features)
-        dryer_pred = vertex_batch_predict('dryers', features)
+        # Look up from cached day predictions
+        cached_predictions = get_cached_predictions(str(hall), 'day')
+        washers = 0
+        dryers = 0
 
-        washers = max(0, int(round(washer_pred[0])))
-        dryers = max(0, int(round(dryer_pred[0])))
+        if cached_predictions:
+            target_ts = rounded_time.replace(tzinfo=None)
+            for pred in cached_predictions.get('washers', []):
+                pred_time = datetime.fromisoformat(pred['timestamp']).replace(tzinfo=None)
+                if pred_time.hour == target_ts.hour and pred_time.minute == target_ts.minute and pred_time.day == target_ts.day:
+                    washers = pred['value']
+                    break
+
+            for pred in cached_predictions.get('dryers', []):
+                pred_time = datetime.fromisoformat(pred['timestamp']).replace(tzinfo=None)
+                if pred_time.hour == target_ts.hour and pred_time.minute == target_ts.minute and pred_time.day == target_ts.day:
+                    dryers = pred['value']
+                    break
 
         # Format time like "4:30PM"
         period = 'PM' if now.hour >= 12 else 'AM'
